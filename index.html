@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <div class="logo-area">
+            <div class="logo-help">
+                <span>+</span>
+                <div>♥</div>
+            </div>
+            <button type="button" id="inicio">HELP</button>
+        </div>
+
+        <div class="usuario">
+            <svg viewBox="0 0 64 64">
+                <circle cx="32" cy="22" r="11"></circle>
+                <path d="M14 55c2-12 10-18 18-18s16 6 18 18"></path>
+            </svg>
+        </div>
+    </header>
+
+    <section id="pesquisa">
+        <div class="icone-pesquisa">
+            <svg viewBox="0 0 64 64">
+                <circle cx="27" cy="27" r="16"></circle>
+                <path d="M39 39l15 15"></path>
+            </svg>
+        </div>
+
+        <input
+            type="text"
+            id="campoPesquisa"
+            placeholder="Buscar hospital, farmácia ou delegacia"
+            autocomplete="off"
+        >
+
+        <button type="button" id="botaoPesquisar">
+            <svg viewBox="0 0 64 64">
+                <circle cx="27" cy="27" r="16"></circle>
+                <path d="M39 39l15 15"></path>
+            </svg>
+        </button>
+    </section>
+
+    <section id="localizacao">
+        <p id="status">Buscando sua localização...</p>
+    </section>
+
+    <section id="mapa"></section>
+
+    <section id="emergencia">
+
+        <button type="button" id="botaoLocalizar" class="botao-principal">
+            <svg viewBox="0 0 64 64">
+                <path d="M32 57s18-17 18-32a18 18 0 1 0-36 0c0 15 18 32 18 32z"></path>
+                <circle cx="32" cy="25" r="6"></circle>
+            </svg>
+            <strong>LOCALIZAR</strong>
+        </button>
+
+        <a href="tel:192" class="botao-principal">
+            <svg viewBox="0 0 64 64">
+                <path d="M16 38h32l-4-18H20z"></path>
+                <path d="M22 20l4-8h12l4 8"></path>
+                <circle cx="22" cy="45" r="4"></circle>
+                <circle cx="42" cy="45" r="4"></circle>
+                <path d="M32 8v6"></path>
+                <path d="M25 11h14"></path>
+            </svg>
+            <strong>URGENTE</strong>
+        </a>
+
+        <a href="tel:190" class="botao-policia">
+            <div class="escudo-policia">
+                <svg viewBox="0 0 64 64">
+                    <path d="M32 6L51 13v16c0 13-8 23-19 29C21 52 13 42 13 29V13z"></path>
+                    <path d="M32 20l3 7 8 1-6 5 2 8-7-4-7 4 2-8-6-5 8-1z"></path>
+                </svg>
+            </div>
+
+            <div>
+                <strong>ACIONAR POLÍCIA RÁPIDO</strong>
+                <small>Toque para pedir ajuda imediata</small>
+            </div>
+
+            <span class="seta">›</span>
+        </a>
+
+    </section>
+
+    <section id="numeroGeral"></section>
+
+    <main>
+
+        <button type="button" data-categoria="Hospital">
+            <svg viewBox="0 0 64 64">
+                <path d="M32 58S11 40 11 23a21 21 0 1 1 42 0c0 17-21 35-21 35z"></path>
+                <path d="M32 14v18"></path>
+                <path d="M23 23h18"></path>
+            </svg>
+            <div>
+                <span>Hospitais</span>
+                <small>Encontrar hospitais</small>
+            </div>
+            <b>›</b>
+        </button>
+
+        <button type="button" data-categoria="Farmácia">
+            <svg viewBox="0 0 64 64">
+                <path d="M32 58S11 40 11 23a21 21 0 1 1 42 0c0 17-21 35-21 35z"></path>
+                <path d="M32 15v17"></path>
+                <path d="M23.5 23.5h17"></path>
+            </svg>
+            <div>
+                <span>Farmácias</span>
+                <small>Encontrar farmácias</small>
+            </div>
+            <b>›</b>
+        </button>
+
+        <button type="button" data-categoria="Delegacia">
+            <svg viewBox="0 0 64 64">
+                <path d="M32 5L52 13v16c0 14-8 24-20 30C20 53 12 43 12 29V13z"></path>
+                <path d="M32 20l3 7 8 1-6 5 2 8-7-4-7 4 2-8-6-5 8-1z"></path>
+            </svg>
+            <div>
+                <span>Delegacias</span>
+                <small>Encontrar polícia</small>
+            </div>
+            <b>›</b>
+        </button>
+
+        <button type="button" data-categoria="Posto de Saúde">
+            <svg viewBox="0 0 64 64">
+                <rect x="15" y="12" width="34" height="40" rx="5"></rect>
+                <path d="M32 20v20"></path>
+                <path d="M22 30h20"></path>
+            </svg>
+            <div>
+                <span>Posto de Saúde</span>
+                <small>Encontrar postos</small>
+            </div>
+            <b>›</b>
+        </button>
+
+        <button type="button" data-categoria="Bombeiro">
+            <svg viewBox="0 0 64 64">
+                <path d="M11 37h42v12H11z"></path>
+                <path d="M18 37l5-13h19l5 13"></path>
+                <circle cx="20" cy="50" r="5"></circle>
+                <circle cx="44" cy="50" r="5"></circle>
+            </svg>
+            <div>
+                <span>Bombeiros</span>
+                <small>Encontrar bombeiros</small>
+            </div>
+            <b>›</b>
+        </button>
+
+        <button type="button" data-categoria="Posto de Gasolina">
+            <svg viewBox="0 0 64 64">
+                <rect x="15" y="10" width="25" height="43" rx="3"></rect>
+                <rect x="21" y="17" width="13" height="10"></rect>
+                <path d="M40 19h7l6 7v21"></path>
+                <path d="M53 47h-7"></path>
+            </svg>
+            <div>
+                <span>Postos</span>
+                <small>Encontrar combustível</small>
+            </div>
+            <b>›</b>
+        </button>
+
+        <button type="button" data-categoria="Mercado">
+            <svg viewBox="0 0 64 64">
+                <path d="M10 14h7l6 30h28l5-22H20"></path>
+                <circle cx="28" cy="51" r="4"></circle>
+                <circle cx="47" cy="51" r="4"></circle>
+            </svg>
+            <div>
+                <span>Mercados</span>
+                <small>Encontrar mercados</small>
+            </div>
+            <b>›</b>
+        </button>
+
+        <button type="button" data-categoria="Restaurantes">
+            <svg viewBox="0 0 64 64">
+                <path d="M17 10v21"></path>
+                <path d="M11 10v10c0 5 12 5 12 0V10"></path>
+                <path d="M17 31v23"></path>
+                <path d="M42 10v44"></path>
+                <path d="M42 10c10 4 10 15 0 20"></path>
+            </svg>
+            <div>
+                <span>Restaurantes</span>
+                <small>Encontrar restaurantes</small>
+            </div>
+            <b>›</b>
+        </button>
+
+        <button type="button" data-categoria="Transporte">
+            <svg viewBox="0 0 64 64">
+                <rect x="10" y="16" width="44" height="33" rx="6"></rect>
+                <path d="M10 34h44"></path>
+                <path d="M18 23h12v8H18z"></path>
+                <path d="M34 23h12v8H34z"></path>
+                <circle cx="20" cy="49" r="4"></circle>
+                <circle cx="44" cy="49" r="4"></circle>
+            </svg>
+            <div>
+                <span>Transporte</span>
+                <small>Encontrar transporte</small>
+            </div>
+            <b>›</b>
+        </button>
+
+        <button type="button" data-categoria="Igreja">
+            <svg viewBox="0 0 64 64">
+                <path d="M13 54V27l19-15 19 15v27z"></path>
+                <path d="M32 12V5"></path>
+                <path d="M26 9h12"></path>
+                <path d="M26 54V39h12v15"></path>
+            </svg>
+            <div>
+                <span>Igrejas</span>
+                <small>Encontrar igrejas</small>
+            </div>
+            <b>›</b>
+        </button>
+
+    </main>
+
+    <div id="avisoResultados">
+        Endereços encontrados. Desça a página para ver os resultados.
+    </div>
+
+    <section id="resultados"></section>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+
+    <script>
+        document.getElementById("botaoLocalizar").addEventListener("click", function () {
+            localizarAutomaticamente();
+        });
+    </script>
+
+</body>
+</html>
