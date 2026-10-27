@@ -1,4 +1,4 @@
-const botoes = document.querySelectorAll("main button");
+const botoes = document.querySelectorAll("main button[data-categoria]");
 const botaoInicio = document.querySelector("#inicio");
 const status = document.querySelector("#status");
 const resultados = document.querySelector("#resultados");
@@ -8,6 +8,8 @@ const campoPesquisa = document.querySelector("#campoPesquisa");
 const botaoPesquisar = document.querySelector("#botaoPesquisar");
 const avisoResultados = document.querySelector("#avisoResultados");
 
+let avisoLocalizacao = document.querySelector("#avisoLocalizacao");
+let botaoPermitirLocalizacao = document.querySelector("#botaoPermitirLocalizacao");
 let categoriaSelecionada = null;
 let localizacaoAtual = null;
 let mapa = null;
@@ -18,22 +20,26 @@ const categorias = {
     "Posto de Saúde": {
         filtro: '["amenity"="clinic"]',
         nome: "postos de saúde",
-        raio: 5000
+        raio: 5000,
+        termos: ["posto de saude", "postos de saude", "ubs", "upa", "upas", "pronto atendimento", "pronto-atendimento"]
     },
     "Farmácia": {
         filtro: '["amenity"="pharmacy"]',
         nome: "farmácias",
-        raio: 5000
+        raio: 5000,
+        termos: ["farmacia", "farmacias", "drogaria", "drogarias"]
     },
     "Hospital": {
         filtro: '["amenity"="hospital"]',
         nome: "hospitais",
-        raio: 5000
+        raio: 5000,
+        termos: ["hospital", "hospitais", "maternidade", "pronto socorro", "pronto-socorro"]
     },
     "Delegacia": {
         filtro: '["amenity"="police"]',
         nome: "unidades policiais",
         raio: 5000,
+        termos: ["delegacia", "delegacias", "policia", "policial"],
         numeroGeral: "190",
         nomeGeral: "Polícia"
     },
@@ -41,33 +47,39 @@ const categorias = {
         filtro: '["amenity"="fire_station"]',
         nome: "quartéis de bombeiros",
         raio: 10000,
+        termos: ["bombeiro", "bombeiros", "corpo de bombeiros"],
         numeroGeral: "193",
         nomeGeral: "Bombeiros"
     },
     "Posto de Gasolina": {
         filtro: '["amenity"="fuel"]',
         nome: "postos de gasolina",
-        raio: 5000
+        raio: 5000,
+        termos: ["posto", "postos", "posto de gasolina", "postos de gasolina", "combustivel"]
     },
     "Mercado": {
         filtro: '["shop"~"supermarket|convenience|grocery"]',
         nome: "mercados",
-        raio: 5000
+        raio: 5000,
+        termos: ["mercado", "mercados", "supermercado", "supermercados", "mercearia"]
     },
     "Transporte": {
         filtro: '["public_transport"]',
         nome: "pontos de transporte",
-        raio: 5000
+        raio: 5000,
+        termos: ["transporte", "onibus", "ponto de onibus", "terminal"]
     },
     "Restaurantes": {
         filtro: '["amenity"~"restaurant|fast_food|cafe"]',
         nome: "restaurantes",
-        raio: 5000
+        raio: 5000,
+        termos: ["restaurante", "restaurantes", "comer", "lanchonete", "cafe"]
     },
     "Igreja": {
         filtro: '["amenity"="place_of_worship"]',
         nome: "locais religiosos",
-        raio: 5000
+        raio: 5000,
+        termos: ["igreja", "igrejas", "templo", "templos", "culto"]
     }
 };
 
@@ -86,6 +98,7 @@ botoes.forEach(function (botao) {
         if (!localizacaoAtual) {
             status.textContent =
                 "Não foi possível localizar. Permissão de localização não concedida.";
+            mostrarAvisoLocalizacao();
             return;
         }
 
@@ -93,14 +106,74 @@ botoes.forEach(function (botao) {
     });
 });
 
+function criarAvisoLocalizacao() {
+    if (avisoLocalizacao) {
+        return;
+    }
+
+    avisoLocalizacao = document.createElement("section");
+    avisoLocalizacao.id = "avisoLocalizacao";
+
+    avisoLocalizacao.innerHTML = `
+        <p>A localização não foi permitida. Para encontrar locais próximos e ordenar os resultados pela distância, permita o acesso à sua localização.</p>
+        <button id="botaoPermitirLocalizacao" type="button">Permitir localização novamente</button>
+    `;
+
+    const localizacaoElemento =
+        document.querySelector("#localizacao");
+
+    if (localizacaoElemento) {
+        localizacaoElemento.insertAdjacentElement(
+            "afterend",
+            avisoLocalizacao
+        );
+    } else if (mapaElemento) {
+        mapaElemento.insertAdjacentElement(
+            "beforebegin",
+            avisoLocalizacao
+        );
+    }
+
+    botaoPermitirLocalizacao =
+        document.querySelector("#botaoPermitirLocalizacao");
+
+    if (botaoPermitirLocalizacao) {
+        botaoPermitirLocalizacao.addEventListener(
+            "click",
+            function () {
+                localizarAutomaticamente();
+            }
+        );
+    }
+}
+
+function mostrarAvisoLocalizacao() {
+    criarAvisoLocalizacao();
+
+    if (avisoLocalizacao) {
+        avisoLocalizacao.classList.add("visivel");
+    }
+}
+
+function esconderAvisoLocalizacao() {
+    if (avisoLocalizacao) {
+        avisoLocalizacao.classList.remove("visivel");
+    }
+}
+
 function localizarAutomaticamente() {
     if (!navigator.geolocation) {
         status.textContent =
             "Não foi possível localizar. Seu navegador não permite localização.";
+
+        mostrarAvisoLocalizacao();
         return;
     }
 
-    status.textContent = "Buscando sua localização...";
+    status.textContent =
+        "Buscando sua localização...";
+
+    mostrarAvisoLocalizacao();
 
     navigator.geolocation.getCurrentPosition(
         function (posicao) {
@@ -115,16 +188,27 @@ function localizarAutomaticamente() {
                 ", " +
                 localizacaoAtual.longitude.toFixed(5);
 
+            esconderAvisoLocalizacao();
             criarMapa();
         },
         function (erro) {
+            localizacaoAtual = null;
+
             if (erro.code === 1) {
                 status.textContent =
                     "Não foi possível localizar. Permissão de localização não concedida.";
+            } else if (erro.code === 2) {
+                status.textContent =
+                    "Não foi possível localizar. Verifique a localização do dispositivo e tente novamente.";
+            } else if (erro.code === 3) {
+                status.textContent =
+                    "A localização demorou para responder. Tente novamente.";
             } else {
                 status.textContent =
                     "Não foi possível localizar. Tente novamente.";
             }
+
+            mostrarAvisoLocalizacao();
         },
         {
             enableHighAccuracy: true,
@@ -196,20 +280,26 @@ function criarMapa() {
 }
 
 async function buscarCategoria(categoria) {
-    const configuracao = categorias[categoria];
+    const configuracao =
+        categorias[categoria];
 
-    if (!configuracao) {
+    if (!configuracao || !localizacaoAtual) {
         return;
     }
 
     status.textContent =
-        "Procurando " + configuracao.nome + " próximos...";
+        "Procurando " +
+        configuracao.nome +
+        " próximos...";
 
     esconderAvisoResultados();
     mostrarNumeroGeral(configuracao);
 
-    const latitude = localizacaoAtual.latitude;
-    const longitude = localizacaoAtual.longitude;
+    const latitude =
+        localizacaoAtual.latitude;
+
+    const longitude =
+        localizacaoAtual.longitude;
 
     const consulta = `
         [out:json][timeout:25];
@@ -220,19 +310,23 @@ async function buscarCategoria(categoria) {
     `;
 
     try {
-        const resposta = await fetch(
-            "https://overpass-api.de/api/interpreter",
-            {
-                method: "POST",
-                body: consulta
-            }
-        );
+        const resposta =
+            await fetch(
+                "https://overpass-api.de/api/interpreter",
+                {
+                    method: "POST",
+                    body: consulta
+                }
+            );
 
         if (!resposta.ok) {
-            throw new Error("Erro na busca");
+            throw new Error(
+                "Erro na busca"
+            );
         }
 
-        const dados = await resposta.json();
+        const dados =
+            await resposta.json();
 
         mostrarResultados(
             dados.elements,
@@ -257,8 +351,11 @@ function mostrarNumeroGeral(configuracao) {
         return;
     }
 
-    const div = document.createElement("div");
-    div.className = "numero-geral";
+    const div =
+        document.createElement("div");
+
+    div.className =
+        "numero-geral";
 
     div.innerHTML = `
         <h2>${configuracao.nomeGeral}</h2>
@@ -299,7 +396,9 @@ function criarLinkGoogleMaps(
 
     if (!pesquisa) {
         pesquisa =
-            latitude + "," + longitude;
+            latitude +
+            "," +
+            longitude;
     }
 
     return (
@@ -316,49 +415,64 @@ function mostrarResultados(
     limparMarcadores();
     esconderAvisoResultados();
 
-    if (locais.length === 0) {
+    if (
+        !locais ||
+        locais.length === 0
+    ) {
         status.textContent =
             "Nenhum resultado encontrado próximo da sua localização.";
+
         return;
     }
 
-    const locaisOrdenados = locais
-        .map(function (local) {
-            const latitude =
-                local.lat ||
-                (local.center && local.center.lat);
+    const locaisOrdenados =
+        locais
+            .map(function (local) {
+                const latitude =
+                    local.lat ||
+                    (
+                        local.center &&
+                        local.center.lat
+                    );
 
-            const longitude =
-                local.lon ||
-                (local.center && local.center.lon);
+                const longitude =
+                    local.lon ||
+                    (
+                        local.center &&
+                        local.center.lon
+                    );
 
-            if (
-                latitude === undefined ||
-                longitude === undefined
-            ) {
-                return null;
-            }
+                if (
+                    latitude === undefined ||
+                    longitude === undefined
+                ) {
+                    return null;
+                }
 
-            const distancia = calcularDistancia(
-                localizacaoAtual.latitude,
-                localizacaoAtual.longitude,
-                latitude,
-                longitude
-            );
+                const distancia =
+                    calcularDistancia(
+                        localizacaoAtual.latitude,
+                        localizacaoAtual.longitude,
+                        latitude,
+                        longitude
+                    );
 
-            return {
-                local: local,
-                latitude: latitude,
-                longitude: longitude,
-                distancia: distancia
-            };
-        })
-        .filter(function (item) {
-            return item !== null;
-        })
-        .sort(function (a, b) {
-            return a.distancia - b.distancia;
-        });
+                return {
+                    local: local,
+                    latitude: latitude,
+                    longitude: longitude,
+                    distancia: distancia
+                };
+            })
+            .filter(function (item) {
+                return item !== null;
+            })
+            .sort(function (a, b) {
+                return (
+                    a.distancia -
+                    b.distancia
+                );
+            });
 
     status.textContent =
         locaisOrdenados.length +
@@ -367,99 +481,120 @@ function mostrarResultados(
     const locaisExibidos =
         locaisOrdenados.slice(0, 10);
 
-    locaisExibidos.forEach(function (item, indice) {
-        const numero = indice + 1;
-        const tags = item.local.tags || {};
+    locaisExibidos.forEach(
+        function (item, indice) {
+            const numero =
+                indice + 1;
 
-        const nome =
-            tags.name ||
-            tags.brand ||
-            nomeCategoria;
+            const tags =
+                item.local.tags || {};
 
-        const endereco =
-            montarEndereco(tags);
+            const nome =
+                tags.name ||
+                tags.brand ||
+                nomeCategoria;
 
-        const mapaLink =
-            criarLinkGoogleMaps(
-                nome,
-                endereco,
-                item.latitude,
-                item.longitude
-            );
+            const endereco =
+                montarEndereco(tags);
 
-        const telefone =
-            tags.phone ||
-            tags["contact:phone"] ||
-            null;
-
-        let botaoTelefone = "";
-
-        if (telefone) {
-            const telefoneLimpo =
-                telefone.replace(/[^\d+]/g, "");
-
-            botaoTelefone =
-                '<a href="tel:' +
-                telefoneLimpo +
-                '">Ligar para unidade</a>';
-        }
-
-        const div =
-            document.createElement("div");
-
-        div.className = "resultado";
-
-        div.innerHTML = `
-            <h3>${numero}. ${nome}</h3>
-            <p>${endereco}</p>
-            <p>${formatarDistancia(item.distancia)}</p>
-
-            <div class="acoes">
-                ${botaoTelefone}
-                <a href="${mapaLink}" target="_blank">Ver no mapa</a>
-            </div>
-        `;
-
-        div.addEventListener("click", function (evento) {
-            if (evento.target.tagName === "A") {
-                return;
-            }
-
-            if (mapa) {
-                mapa.setView(
-                    [
-                        item.latitude,
-                        item.longitude
-                    ],
-                    17
+            const mapaLink =
+                criarLinkGoogleMaps(
+                    nome,
+                    endereco,
+                    item.latitude,
+                    item.longitude
                 );
 
-                const marcador =
-                    marcadoresLocais[indice];
+            const telefone =
+                tags.phone ||
+                tags["contact:phone"] ||
+                null;
 
-                if (marcador) {
-                    marcador.openPopup();
-                }
+            let botaoTelefone = "";
+
+            if (telefone) {
+                const telefoneLimpo =
+                    telefone.replace(
+                        /[^\d+]/g,
+                        ""
+                    );
+
+                botaoTelefone =
+                    '<a href="tel:' +
+                    telefoneLimpo +
+                    '">Ligar para unidade</a>';
             }
-        });
 
-        resultados.appendChild(div);
+            const div =
+                document.createElement("div");
 
-        adicionarMarcador(
-            item.latitude,
-            item.longitude,
-            numero,
-            nome,
-            endereco,
-            item.distancia
-        );
-    });
+            div.className =
+                "resultado";
+
+            div.innerHTML = `
+                <h3>${numero}. ${nome}</h3>
+                <p>${endereco}</p>
+                <p>${formatarDistancia(item.distancia)}</p>
+
+                <div class="acoes">
+                    ${botaoTelefone}
+                    <a href="${mapaLink}" target="_blank" rel="noopener noreferrer">
+                        Ver no mapa
+                    </a>
+                </div>
+            `;
+
+            div.addEventListener(
+                "click",
+                function (evento) {
+                    if (
+                        evento.target.tagName ===
+                        "A"
+                    ) {
+                        return;
+                    }
+
+                    if (mapa) {
+                        mapa.setView(
+                            [
+                                item.latitude,
+                                item.longitude
+                            ],
+                            17
+                        );
+
+                        const marcador =
+                            marcadoresLocais[
+                                indice
+                            ];
+
+                        if (marcador) {
+                            marcador.openPopup();
+                        }
+                    }
+                }
+            );
+
+            resultados.appendChild(div);
+
+            adicionarMarcador(
+                item.latitude,
+                item.longitude,
+                numero,
+                nome,
+                endereco,
+                item.distancia
+            );
+        }
+    );
 
     if (
         mapa &&
         locaisExibidos.length > 0
     ) {
-        ajustarMapa(locaisExibidos);
+        ajustarMapa(
+            locaisExibidos
+        );
     }
 
     mostrarAvisoResultados();
@@ -473,19 +608,23 @@ function adicionarMarcador(
     endereco,
     distancia
 ) {
-    const icone = L.divIcon({
-        className: "",
-        html:
-            '<div class="marcador-numero">' +
-            numero +
-            "</div>",
-        iconSize: [34, 34],
-        iconAnchor: [17, 17]
-    });
+    const icone =
+        L.divIcon({
+            className: "",
+            html:
+                '<div class="marcador-numero">' +
+                numero +
+                "</div>",
+            iconSize: [34, 34],
+            iconAnchor: [17, 17]
+        });
 
     const marcador =
         L.marker(
-            [latitude, longitude],
+            [
+                latitude,
+                longitude
+            ],
             {
                 icon: icone
             }
@@ -499,18 +638,26 @@ function adicionarMarcador(
         "</strong><br>" +
         endereco +
         "<br>" +
-        formatarDistancia(distancia)
+        formatarDistancia(
+            distancia
+        )
     );
 
-    marcadoresLocais.push(marcador);
+    marcadoresLocais.push(
+        marcador
+    );
 }
 
 function limparMarcadores() {
-    marcadoresLocais.forEach(function (marcador) {
-        if (mapa) {
-            mapa.removeLayer(marcador);
+    marcadoresLocais.forEach(
+        function (marcador) {
+            if (mapa) {
+                mapa.removeLayer(
+                    marcador
+                );
+            }
         }
-    });
+    );
 
     marcadoresLocais = [];
 }
@@ -523,19 +670,76 @@ function ajustarMapa(locais) {
         ]
     ];
 
-    locais.forEach(function (item) {
-        pontos.push([
-            item.latitude,
-            item.longitude
-        ]);
-    });
+    locais.forEach(
+        function (item) {
+            pontos.push([
+                item.latitude,
+                item.longitude
+            ]);
+        }
+    );
 
     const limites =
         L.latLngBounds(pontos);
 
-    mapa.fitBounds(limites, {
-        padding: [30, 30]
-    });
+    mapa.fitBounds(
+        limites,
+        {
+            padding: [30, 30]
+        }
+    );
+}
+
+function normalizarTexto(texto) {
+    return String(texto || "")
+        .normalize("NFD")
+        .replace(
+            /[\u0300-\u036f]/g,
+            ""
+        )
+        .toLowerCase()
+        .trim();
+}
+
+function identificarCategoria(texto) {
+    const busca =
+        normalizarTexto(texto);
+
+    for (
+        const nomeCategoria in categorias
+    ) {
+        const configuracao =
+            categorias[
+                nomeCategoria
+            ];
+
+        const termos =
+            configuracao.termos || [];
+
+        if (
+            normalizarTexto(
+                nomeCategoria
+            ) === busca
+        ) {
+            return nomeCategoria;
+        }
+
+        if (
+            termos.some(
+                function (termo) {
+                    return (
+                        normalizarTexto(
+                            termo
+                        ) === busca
+                    );
+                }
+            )
+        ) {
+            return nomeCategoria;
+        }
+    }
+
+    return null;
 }
 
 async function pesquisarEndereco() {
@@ -550,6 +754,49 @@ async function pesquisarEndereco() {
         return;
     }
 
+    const categoriaEncontrada =
+        identificarCategoria(texto);
+
+    if (categoriaEncontrada) {
+        if (!localizacaoAtual) {
+            status.textContent =
+                "Para pesquisar locais próximos, permita sua localização.";
+
+            mostrarAvisoLocalizacao();
+            return;
+        }
+
+        botoes.forEach(
+            function (botao) {
+                botao.classList.remove(
+                    "ativo"
+                );
+
+                if (
+                    botao.dataset.categoria ===
+                    categoriaEncontrada
+                ) {
+                    botao.classList.add(
+                        "ativo"
+                    );
+                }
+            }
+        );
+
+        categoriaSelecionada =
+            categoriaEncontrada;
+
+        resultados.innerHTML = "";
+        numeroGeral.innerHTML = "";
+        esconderAvisoResultados();
+
+        buscarCategoria(
+            categoriaEncontrada
+        );
+
+        return;
+    }
+
     status.textContent =
         "Pesquisando: " +
         texto +
@@ -561,9 +808,43 @@ async function pesquisarEndereco() {
     esconderAvisoResultados();
 
     try {
-        const url =
-            "https://nominatim.openstreetmap.org/search?format=json&limit=10&addressdetails=1&q=" +
-            encodeURIComponent(texto);
+        let url =
+            "https://nominatim.openstreetmap.org/search?format=json&limit=10&addressdetails=1&accept-language=pt-BR&q=" +
+            encodeURIComponent(
+                texto
+            );
+
+        if (localizacaoAtual) {
+            const delta = 0.15;
+
+            const esquerda =
+                localizacaoAtual.longitude -
+                delta;
+
+            const direita =
+                localizacaoAtual.longitude +
+                delta;
+
+            const baixo =
+                localizacaoAtual.latitude -
+                delta;
+
+            const cima =
+                localizacaoAtual.latitude +
+                delta;
+
+            url +=
+                "&viewbox=" +
+                encodeURIComponent(
+                    esquerda +
+                    "," +
+                    cima +
+                    "," +
+                    direita +
+                    "," +
+                    baixo
+                );
+        }
 
         const resposta =
             await fetch(
@@ -617,122 +898,182 @@ function mostrarPesquisa(
         return;
     }
 
-    status.textContent =
-        dados.length +
-        " resultado(s) encontrado(s).";
-
-    dados.forEach(function (item, indice) {
-        const numero = indice + 1;
-
-        const latitude =
-            parseFloat(item.lat);
-
-        const longitude =
-            parseFloat(item.lon);
-
-        const nomeCompleto =
-            item.display_name ||
-            "Local encontrado";
-
-        const nome =
-            nomeCompleto.split(",")[0];
-
-        const endereco =
-            nomeCompleto;
-
-        const distancia =
-            localizacaoAtual
-                ? calcularDistancia(
-                    localizacaoAtual.latitude,
-                    localizacaoAtual.longitude,
-                    latitude,
-                    longitude
-                )
-                : null;
-
-        const mapaLink =
-            criarLinkGoogleMaps(
-                nome,
-                endereco,
-                latitude,
-                longitude
-            );
-
-        const div =
-            document.createElement("div");
-
-        div.className =
-            "resultado";
-
-        div.innerHTML = `
-            <h3>${numero}. ${nome}</h3>
-            <p>${endereco}</p>
-            ${
-                distancia !== null
-                    ? "<p>" +
-                      formatarDistancia(distancia) +
-                      "</p>"
-                    : ""
-            }
-
-            <div class="acoes">
-                <a href="${mapaLink}" target="_blank">
-                    Ver no mapa
-                </a>
-            </div>
-        `;
-
-        div.addEventListener(
-            "click",
-            function (evento) {
-                if (
-                    evento.target.tagName ===
-                    "A"
-                ) {
-                    return;
-                }
-
-                if (mapa) {
-                    mapa.setView(
-                        [
-                            latitude,
-                            longitude
-                        ],
-                        17
+    const resultadosPreparados =
+        dados
+            .map(function (item) {
+                const latitude =
+                    parseFloat(
+                        item.lat
                     );
 
+                const longitude =
+                    parseFloat(
+                        item.lon
+                    );
+
+                if (
+                    Number.isNaN(
+                        latitude
+                    ) ||
+                    Number.isNaN(
+                        longitude
+                    )
+                ) {
+                    return null;
+                }
+
+                const nomeCompleto =
+                    item.display_name ||
+                    "Local encontrado";
+
+                const nome =
+                    nomeCompleto.split(
+                        ","
+                    )[0];
+
+                const endereco =
+                    nomeCompleto;
+
+                const distancia =
+                    localizacaoAtual
+                        ? calcularDistancia(
+                            localizacaoAtual.latitude,
+                            localizacaoAtual.longitude,
+                            latitude,
+                            longitude
+                        )
+                        : null;
+
+                return {
+                    latitude: latitude,
+                    longitude: longitude,
+                    nome: nome,
+                    endereco: endereco,
+                    distancia: distancia
+                };
+            })
+            .filter(function (item) {
+                return item !== null;
+            })
+            .sort(function (a, b) {
+                if (
+                    a.distancia === null ||
+                    b.distancia === null
+                ) {
+                    return 0;
+                }
+
+                return (
+                    a.distancia -
+                    b.distancia
+                );
+            })
+            .slice(0, 10);
+
+    status.textContent =
+        resultadosPreparados.length +
+        " resultado(s) encontrado(s).";
+
+    resultadosPreparados.forEach(
+        function (
+            item,
+            indice
+        ) {
+            const numero =
+                indice + 1;
+
+            const mapaLink =
+                criarLinkGoogleMaps(
+                    item.nome,
+                    item.endereco,
+                    item.latitude,
+                    item.longitude
+                );
+
+            const div =
+                document.createElement(
+                    "div"
+                );
+
+            div.className =
+                "resultado";
+
+            div.innerHTML = `
+                <h3>${numero}. ${item.nome}</h3>
+                <p>${item.endereco}</p>
+                ${
+                    item.distancia !== null
+                        ? "<p>" +
+                          formatarDistancia(
+                              item.distancia
+                          ) +
+                          "</p>"
+                        : ""
+                }
+
+                <div class="acoes">
+                    <a href="${mapaLink}" target="_blank" rel="noopener noreferrer">
+                        Ver no mapa
+                    </a>
+                </div>
+            `;
+
+            div.addEventListener(
+                "click",
+                function (evento) {
                     if (
-                        marcadoresLocais[
-                            indice
-                        ]
+                        evento.target.tagName ===
+                        "A"
                     ) {
-                        marcadoresLocais[
-                            indice
-                        ].openPopup();
+                        return;
+                    }
+
+                    if (mapa) {
+                        mapa.setView(
+                            [
+                                item.latitude,
+                                item.longitude
+                            ],
+                            17
+                        );
+
+                        if (
+                            marcadoresLocais[
+                                indice
+                            ]
+                        ) {
+                            marcadoresLocais[
+                                indice
+                            ].openPopup();
+                        }
                     }
                 }
-            }
-        );
+            );
 
-        resultados.appendChild(div);
+            resultados.appendChild(
+                div
+            );
 
-        adicionarMarcador(
-            latitude,
-            longitude,
-            numero,
-            nome,
-            endereco,
-            distancia
-        );
-    });
+            adicionarMarcador(
+                item.latitude,
+                item.longitude,
+                numero,
+                item.nome,
+                item.endereco,
+                item.distancia
+            );
+        }
+    );
 
     const pontos =
-        dados.map(function (item) {
-            return [
-                parseFloat(item.lat),
-                parseFloat(item.lon)
-            ];
-        });
+        resultadosPreparados.map(
+            function (item) {
+                return [
+                    item.latitude,
+                    item.longitude
+                ];
+            }
+        );
 
     if (localizacaoAtual) {
         pontos.push([
@@ -763,13 +1104,19 @@ function montarEndereco(tags) {
         let endereco =
             tags["addr:street"];
 
-        if (tags["addr:housenumber"]) {
+        if (
+            tags["addr:housenumber"]
+        ) {
             endereco +=
                 ", " +
-                tags["addr:housenumber"];
+                tags[
+                    "addr:housenumber"
+                ];
         }
 
-        partes.push(endereco);
+        partes.push(
+            endereco
+        );
     }
 
     if (tags["addr:suburb"]) {
@@ -788,7 +1135,9 @@ function montarEndereco(tags) {
         return "Endereço não informado";
     }
 
-    return partes.join(" - ");
+    return partes.join(
+        " - "
+    );
 }
 
 function calcularDistancia(
@@ -797,7 +1146,8 @@ function calcularDistancia(
     lat2,
     lon2
 ) {
-    const raioTerra = 6371;
+    const raioTerra =
+        6371;
 
     const diferencaLat =
         (lat2 - lat1) *
@@ -817,10 +1167,14 @@ function calcularDistancia(
             diferencaLat / 2
         ) +
         Math.cos(
-            lat1 * Math.PI / 180
+            lat1 *
+            Math.PI /
+            180
         ) *
         Math.cos(
-            lat2 * Math.PI / 180
+            lat2 *
+            Math.PI /
+            180
         ) *
         Math.sin(
             diferencaLon / 2
@@ -842,19 +1196,27 @@ function calcularDistancia(
 function formatarDistancia(
     distancia
 ) {
-    if (distancia === null) {
+    if (
+        distancia === null
+    ) {
         return "";
     }
 
-    if (distancia < 1) {
-        return Math.round(
-            distancia * 1000
-        ) +
-        " m de distância";
+    if (
+        distancia < 1
+    ) {
+        return (
+            Math.round(
+                distancia * 1000
+            ) +
+            " m de distância"
+        );
     }
 
-    return distancia.toFixed(2) +
-        " km de distância";
+    return (
+        distancia.toFixed(2) +
+        " km de distância"
+    );
 }
 
 function mostrarAvisoResultados() {
@@ -922,7 +1284,10 @@ botaoPesquisar.addEventListener(
 campoPesquisa.addEventListener(
     "keydown",
     function (evento) {
-        if (evento.key === "Enter") {
+        if (
+            evento.key ===
+            "Enter"
+        ) {
             pesquisarEndereco();
         }
     }
@@ -940,9 +1305,13 @@ botaoInicio.addEventListener(
         limparMarcadores();
         esconderAvisoResultados();
 
-        botoes.forEach(function (botao) {
-            botao.classList.remove("ativo");
-        });
+        botoes.forEach(
+            function (botao) {
+                botao.classList.remove(
+                    "ativo"
+                );
+            }
+        );
 
         if (localizacaoAtual) {
             status.textContent =
@@ -951,6 +1320,7 @@ botaoInicio.addEventListener(
                 ", " +
                 localizacaoAtual.longitude.toFixed(5);
 
+            esconderAvisoLocalizacao();
             criarMapa();
         } else {
             localizarAutomaticamente();

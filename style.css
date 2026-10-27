@@ -193,6 +193,45 @@ header {
     line-height: 1.4;
 }
 
+#avisoLocalizacao {
+    width: min(94%, 1000px);
+    margin: 12px auto 20px;
+    padding: 18px 20px;
+    background: #ffffff;
+    border: 2px solid #ef2929;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+    display: none;
+}
+
+#avisoLocalizacao.visivel {
+    display: block;
+}
+
+#avisoLocalizacao p {
+    margin: 0 0 13px;
+    color: #53647a;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+#botaoPermitirLocalizacao {
+    border: none;
+    border-radius: 25px;
+    padding: 12px 22px;
+    background: #2389df;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+#botaoPermitirLocalizacao:hover {
+    transform: translateY(-2px);
+}
+
 #mapa {
     width: min(94%, 1000px);
     height: clamp(380px, 55vh, 600px);
@@ -692,6 +731,10 @@ main button.ativo {
         width: 92%;
     }
 
+    #avisoLocalizacao {
+        width: 92%;
+    }
+
     main {
         gap: 13px;
     }
@@ -815,6 +858,21 @@ main button.ativo {
         padding: 0 10px;
     }
 
+    #avisoLocalizacao {
+        width: 94%;
+        padding: 16px;
+        border-radius: 17px;
+    }
+
+    #avisoLocalizacao p {
+        font-size: 13px;
+    }
+
+    #botaoPermitirLocalizacao {
+        width: 100%;
+        padding: 11px 15px;
+    }
+
     #mapa {
         width: 94%;
         height: 350px;
@@ -935,6 +993,10 @@ main button.ativo {
     #resultados {
         width: 95%;
     }
+
+    #avisoLocalizacao {
+        width: 95%;
+    }
 }
 
 @media (min-width: 1400px) {
@@ -949,7 +1011,8 @@ main button.ativo {
     #emergencia,
     #numeroGeral,
     main,
-    #resultados {
+    #resultados,
+    #avisoLocalizacao {
         max-width: 1100px;
     }
 

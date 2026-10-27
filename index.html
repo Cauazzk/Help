@@ -37,9 +37,26 @@
         <input
             type="text"
             id="campoPesquisa"
-            placeholder="Buscar hospital, farmácia ou delegacia"
+            placeholder="Buscar hospital, farmácia, mercado ou endereço"
             autocomplete="off"
+            list="sugestoesPesquisa"
         >
+
+        <datalist id="sugestoesPesquisa">
+            <option value="UPA">
+            <option value="Hospital">
+            <option value="Farmácia">
+            <option value="Mercado">
+            <option value="Mercado Nagumo">
+            <option value="Igreja">
+            <option value="Igreja da Graça">
+            <option value="Delegacia">
+            <option value="Bombeiros">
+            <option value="Posto de Saúde">
+            <option value="Posto de Gasolina">
+            <option value="Restaurante">
+            <option value="Transporte">
+        </datalist>
 
         <button type="button" id="botaoPesquisar">
             <svg viewBox="0 0 64 64">
@@ -51,6 +68,19 @@
 
     <section id="localizacao">
         <p id="status">Buscando sua localização...</p>
+    </section>
+
+    <section id="avisoLocalizacao">
+        <div>
+            <strong>Permissão de localização necessária</strong>
+            <p id="mensagemPermissao">
+                Permita a localização para usar o mapa e encontrar os locais mais próximos.
+            </p>
+        </div>
+
+        <button type="button" id="botaoPermitirLocalizacao">
+            Permitir localização
+        </button>
     </section>
 
     <section id="mapa"></section>
